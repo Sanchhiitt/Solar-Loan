@@ -1,0 +1,29 @@
+# Web Framework
+Flask==2.3.3
+flask-cors==4.0.0
+flask-limiter==3.5.0
+# Data Processing
+pandas==2.1.1
+numpy==1.25.2
+requests==2.31.0
+# Database
+SQLAlchemy==2.0.21
+# Note: sqlite3 is built into Python, no need to install it via pip
+# API & Scraping
+beautifulsoup4==4.12.2
+selenium==4.14.0
+lxml==4.9.3
+# LLM
+openai==0.28.1
+langchain==0.0.310
+tiktoken==0.5.1
+# Utilities
+python-dotenv==1.0.0
+python-dateutil==2.8.2
+# Testing
+pytest==7.4.2
+pytest-cov==4.1.0
+# Development
+black==23.9.1
+flake8==6.1.0
+pre-commit==3.4.0
