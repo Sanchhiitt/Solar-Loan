@@ -18,7 +18,7 @@ services:
   - type: web
     name: solar-loan-frontend
     runtime: node
-    buildCommand: cd frontend && npm ci && npm run build
+    buildCommand: cd frontend && npm ci --include=dev && npm run build
     startCommand: cd frontend && npm start
     plan: free
     envVars:
