@@ -1,5 +1,3 @@
-# Create .gitignore file
-cat > .gitignore << EOF
 # Python
 venv/
 __pycache__/
@@ -8,31 +6,41 @@ __pycache__/
 *.pyd
 .Python
 *.so
+
+# Environment variables
 .env
+.env.local
+.env.production
+backend/.env
+
 # Data
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
 # OS
 .DS_Store
 Thumbs.db
+
 # Logs
 *.log
 logs/
+
 # API Keys
 config/secrets.json
-.env.local
+
 # Node
 node_modules/
 dist/
 build/
-EOF
-# Create .gitkeep files to track empty directories
-touch data/raw/.gitkeep
-touch data/processed/.gitkeep
+
+# Database
+*.db
+*.sqlite

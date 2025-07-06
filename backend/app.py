@@ -92,15 +92,30 @@ def log_error(endpoint: str, zip_code: str, error: str, error_details: dict = No
         f.write(json.dumps(error_entry) + '\n')
 
 # API Keys and URLs from Environment Variables
-EIA_API_KEY = os.getenv('EIA_API_KEY', 'EvfoVk7m9rgxL1meDiADYBT8mwISO0cXuSxoaW2K')
-EIA_URL = os.getenv('EIA_URL', 'https://api.eia.gov/v2/electricity/retail-sales/data')
-ZIPPOPOTAM_URL = os.getenv('ZIPPOPOTAM_URL', 'http://api.zippopotam.us/us/{zip}')
-FCC_LOOKUP_URL = os.getenv('FCC_LOOKUP_URL', 'https://geo.fcc.gov/api/census/block/find')
-CENSUS_API_KEY = os.getenv('CENSUS_API_KEY', '49430368095bb59d02bf3c8e1aa41dbf49591f38')
-CENSUS_API_URL = os.getenv('CENSUS_API_URL', 'https://api.census.gov/data/2021/acs/acs5')
+EIA_API_KEY = os.getenv('EIA_API_KEY')
+EIA_URL = os.getenv('EIA_URL')
+ZIPPOPOTAM_URL = os.getenv('ZIPPOPOTAM_URL')
+FCC_LOOKUP_URL = os.getenv('FCC_LOOKUP_URL')
+CENSUS_API_KEY = os.getenv('CENSUS_API_KEY')
+CENSUS_API_URL = os.getenv('CENSUS_API_URL')
 
 # Vantage Score API
-VANTAGE_API_URL = os.getenv('VANTAGE_API_URL', 'https://excel-api-rq2e.onrender.com')
+VANTAGE_API_URL = os.getenv('VANTAGE_API_URL')
+
+# Validate required environment variables
+required_env_vars = {
+    'EIA_API_KEY': EIA_API_KEY,
+    'EIA_URL': EIA_URL,
+    'ZIPPOPOTAM_URL': ZIPPOPOTAM_URL,
+    'FCC_LOOKUP_URL': FCC_LOOKUP_URL,
+    'CENSUS_API_KEY': CENSUS_API_KEY,
+    'CENSUS_API_URL': CENSUS_API_URL,
+    'VANTAGE_API_URL': VANTAGE_API_URL
+}
+
+missing_vars = [var for var, value in required_env_vars.items() if not value]
+if missing_vars:
+    logger.warning(f"Missing environment variables: {', '.join(missing_vars)}. Please check your .env file.")
 
 # Gemini AI Configuration
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
