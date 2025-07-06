@@ -13,6 +13,20 @@ services:
         value: 0.0.0.0
       - key: GEMINI_API_KEY
         sync: false  # This will need to be set manually in Render dashboard
+      - key: EIA_API_KEY
+        value: EvfoVk7m9rgxL1meDiADYBT8mwISO0cXuSxoaW2K
+      - key: EIA_URL
+        value: https://api.eia.gov/v2/electricity/retail-sales/data
+      - key: ZIPPOPOTAM_URL
+        value: http://api.zippopotam.us/us/{zip}
+      - key: FCC_LOOKUP_URL
+        value: https://geo.fcc.gov/api/census/block/find
+      - key: CENSUS_API_KEY
+        value: 49430368095bb59d02bf3c8e1aa41dbf49591f38
+      - key: CENSUS_API_URL
+        value: https://api.census.gov/data/2021/acs/acs5
+      - key: VANTAGE_API_URL
+        value: https://excel-api-rq2e.onrender.com
 
   # Frontend Service
   - type: web

@@ -91,16 +91,16 @@ def log_error(endpoint: str, zip_code: str, error: str, error_details: dict = No
     with open(error_log_file, 'a', encoding='utf-8') as f:
         f.write(json.dumps(error_entry) + '\n')
 
-# API Keys and URLs
-EIA_API_KEY = "EvfoVk7m9rgxL1meDiADYBT8mwISO0cXuSxoaW2K"
-EIA_URL = "https://api.eia.gov/v2/electricity/retail-sales/data"
-ZIPPOPOTAM_URL = "http://api.zippopotam.us/us/{zip}"
-FCC_LOOKUP_URL = "https://geo.fcc.gov/api/census/block/find"
-CENSUS_API_KEY = "49430368095bb59d02bf3c8e1aa41dbf49591f38"  # Get from https://api.census.gov/data/key_signup.html
-CENSUS_API_URL = "https://api.census.gov/data/2021/acs/acs5"
+# API Keys and URLs from Environment Variables
+EIA_API_KEY = os.getenv('EIA_API_KEY', 'EvfoVk7m9rgxL1meDiADYBT8mwISO0cXuSxoaW2K')
+EIA_URL = os.getenv('EIA_URL', 'https://api.eia.gov/v2/electricity/retail-sales/data')
+ZIPPOPOTAM_URL = os.getenv('ZIPPOPOTAM_URL', 'http://api.zippopotam.us/us/{zip}')
+FCC_LOOKUP_URL = os.getenv('FCC_LOOKUP_URL', 'https://geo.fcc.gov/api/census/block/find')
+CENSUS_API_KEY = os.getenv('CENSUS_API_KEY', '49430368095bb59d02bf3c8e1aa41dbf49591f38')
+CENSUS_API_URL = os.getenv('CENSUS_API_URL', 'https://api.census.gov/data/2021/acs/acs5')
 
 # Vantage Score API
-VANTAGE_API_URL = "https://excel-api-rq2e.onrender.com"
+VANTAGE_API_URL = os.getenv('VANTAGE_API_URL', 'https://excel-api-rq2e.onrender.com')
 
 # Gemini AI Configuration
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
