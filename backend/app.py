@@ -9,7 +9,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai
 from dotenv import load_dotenv
-import pandas as pd
+from openpyxl import load_workbook
 
 # Load environment variables from .env file
 load_dotenv()
@@ -120,7 +120,7 @@ if missing_vars:
 _vantage_data_cache = None
 
 def load_vantage_data_from_excel():
-    """Load Vantage Score data from local Excel file"""
+    """Load Vantage Score data from local Excel file using openpyxl"""
     global _vantage_data_cache
 
     if _vantage_data_cache is not None:
@@ -134,42 +134,72 @@ def load_vantage_data_from_excel():
             logger.error(f"Excel file not found at: {excel_path}")
             return None
 
-        # Read Excel file
+        # Read Excel file using openpyxl
         logger.info(f"Loading Vantage Score data from: {excel_path}")
-        df = pd.read_excel(excel_path)
+        workbook = load_workbook(excel_path, read_only=True)
+        worksheet = workbook.active
+
+        # Get header row to find column indices
+        headers = []
+        for cell in worksheet[1]:
+            headers.append(cell.value)
+
+        # Find column indices for ZIP code and Vantage Score
+        zip_col_idx = None
+        vantage_col_idx = None
+        city_col_idx = None
+        state_col_idx = None
+
+        for i, header in enumerate(headers):
+            if header:
+                header_lower = str(header).lower().strip()
+                # Look for ZIP code column
+                if header_lower in ['zip', 'zip_code', 'zipcode']:
+                    zip_col_idx = i
+                # Look for Vantage Score column
+                elif 'vantage' in header_lower or 'score' in header_lower:
+                    vantage_col_idx = i
+                # Look for city column
+                elif header_lower == 'city':
+                    city_col_idx = i
+                # Look for state column
+                elif header_lower == 'state':
+                    state_col_idx = i
+
+        if zip_col_idx is None or vantage_col_idx is None:
+            logger.error("Could not find ZIP code or Vantage Score columns in Excel file")
+            return None
 
         # Convert to dictionary for faster lookups
-        # Assuming the Excel has columns: 'zip' and 'Average Vantage' (or similar)
         vantage_dict = {}
 
-        for _, row in df.iterrows():
-            # Handle different possible column names for ZIP code
-            zip_col = None
-            for col in ['zip', 'ZIP', 'Zip', 'zip_code', 'ZIP_CODE', 'zipcode']:
-                if col in df.columns:
-                    zip_col = col
-                    break
+        # Read data rows (skip header row)
+        for row in worksheet.iter_rows(min_row=2, values_only=True):
+            if len(row) > max(zip_col_idx, vantage_col_idx):
+                zip_value = row[zip_col_idx]
+                vantage_value = row[vantage_col_idx]
 
-            # Handle different possible column names for Vantage Score
-            vantage_col = None
-            for col in ['Average Vantage', 'average_vantage', 'vantage_score', 'Vantage Score', 'VANTAGE_SCORE']:
-                if col in df.columns:
-                    vantage_col = col
-                    break
+                if zip_value is not None and vantage_value is not None:
+                    # Clean and format ZIP code
+                    zip_code = str(zip_value).strip()
+                    if len(zip_code) < 5:
+                        zip_code = zip_code.zfill(5)  # Pad with leading zeros
 
-            if zip_col and vantage_col:
-                zip_code = str(row[zip_col]).strip()
-                if len(zip_code) < 5:
-                    zip_code = zip_code.zfill(5)  # Pad with leading zeros
+                    # Get city and state if available
+                    city = row[city_col_idx] if city_col_idx is not None and city_col_idx < len(row) else 'Unknown'
+                    state = row[state_col_idx] if state_col_idx is not None and state_col_idx < len(row) else 'Unknown'
 
-                vantage_score = row[vantage_col]
-                if pd.notna(vantage_score):  # Check if not NaN
-                    vantage_dict[zip_code] = {
-                        'vantage_score': float(vantage_score),
-                        'city': row.get('city', row.get('City', 'Unknown')),
-                        'state': row.get('state', row.get('State', 'Unknown'))
-                    }
+                    try:
+                        vantage_dict[zip_code] = {
+                            'vantage_score': float(vantage_value),
+                            'city': str(city) if city else 'Unknown',
+                            'state': str(state) if state else 'Unknown'
+                        }
+                    except (ValueError, TypeError):
+                        # Skip rows with invalid vantage scores
+                        continue
 
+        workbook.close()
         _vantage_data_cache = vantage_dict
         logger.info(f"Loaded {len(vantage_dict)} Vantage Score records from Excel file")
         return vantage_dict
