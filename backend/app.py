@@ -9,6 +9,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai
 from dotenv import load_dotenv
+import pandas as pd
 
 # Load environment variables from .env file
 load_dotenv()
@@ -99,8 +100,7 @@ FCC_LOOKUP_URL = os.getenv('FCC_LOOKUP_URL')
 CENSUS_API_KEY = os.getenv('CENSUS_API_KEY')
 CENSUS_API_URL = os.getenv('CENSUS_API_URL')
 
-# Vantage Score API
-VANTAGE_API_URL = os.getenv('VANTAGE_API_URL')
+# Vantage Score - now using local Excel file instead of API
 
 # Validate required environment variables
 required_env_vars = {
@@ -109,13 +109,74 @@ required_env_vars = {
     'ZIPPOPOTAM_URL': ZIPPOPOTAM_URL,
     'FCC_LOOKUP_URL': FCC_LOOKUP_URL,
     'CENSUS_API_KEY': CENSUS_API_KEY,
-    'CENSUS_API_URL': CENSUS_API_URL,
-    'VANTAGE_API_URL': VANTAGE_API_URL
+    'CENSUS_API_URL': CENSUS_API_URL
 }
 
 missing_vars = [var for var, value in required_env_vars.items() if not value]
 if missing_vars:
     logger.warning(f"Missing environment variables: {', '.join(missing_vars)}. Please check your .env file.")
+
+# Global variable to cache Excel data
+_vantage_data_cache = None
+
+def load_vantage_data_from_excel():
+    """Load Vantage Score data from local Excel file"""
+    global _vantage_data_cache
+
+    if _vantage_data_cache is not None:
+        return _vantage_data_cache
+
+    try:
+        # Path to Excel file (in root directory)
+        excel_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'new data.xlsx')
+
+        if not os.path.exists(excel_path):
+            logger.error(f"Excel file not found at: {excel_path}")
+            return None
+
+        # Read Excel file
+        logger.info(f"Loading Vantage Score data from: {excel_path}")
+        df = pd.read_excel(excel_path)
+
+        # Convert to dictionary for faster lookups
+        # Assuming the Excel has columns: 'zip' and 'Average Vantage' (or similar)
+        vantage_dict = {}
+
+        for _, row in df.iterrows():
+            # Handle different possible column names for ZIP code
+            zip_col = None
+            for col in ['zip', 'ZIP', 'Zip', 'zip_code', 'ZIP_CODE', 'zipcode']:
+                if col in df.columns:
+                    zip_col = col
+                    break
+
+            # Handle different possible column names for Vantage Score
+            vantage_col = None
+            for col in ['Average Vantage', 'average_vantage', 'vantage_score', 'Vantage Score', 'VANTAGE_SCORE']:
+                if col in df.columns:
+                    vantage_col = col
+                    break
+
+            if zip_col and vantage_col:
+                zip_code = str(row[zip_col]).strip()
+                if len(zip_code) < 5:
+                    zip_code = zip_code.zfill(5)  # Pad with leading zeros
+
+                vantage_score = row[vantage_col]
+                if pd.notna(vantage_score):  # Check if not NaN
+                    vantage_dict[zip_code] = {
+                        'vantage_score': float(vantage_score),
+                        'city': row.get('city', row.get('City', 'Unknown')),
+                        'state': row.get('state', row.get('State', 'Unknown'))
+                    }
+
+        _vantage_data_cache = vantage_dict
+        logger.info(f"Loaded {len(vantage_dict)} Vantage Score records from Excel file")
+        return vantage_dict
+
+    except Exception as e:
+        logger.error(f"Error loading Excel file: {e}")
+        return None
 
 # Gemini AI Configuration
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -490,79 +551,32 @@ def calculate_diversity_score(race_percentages: dict) -> float:
     return round(1.0 - total, 3)
 
 def get_vantage_score(zip_code: str):
-    """Get average Vantage Score for ZIP code from Excel API"""
+    """Get average Vantage Score for ZIP code from local Excel file"""
     try:
-        # Use the correct endpoint
-        endpoint = f"{VANTAGE_API_URL}/data"
-        logger.info(f"Fetching Vantage Score from: {endpoint}")
+        # Load data from local Excel file
+        vantage_data = load_vantage_data_from_excel()
 
-        response = requests.get(endpoint, timeout=15)
+        if not vantage_data:
+            logger.error("Failed to load Vantage Score data from Excel file")
+            return None
 
-        if response.status_code == 200:
-            data = response.json()
-            logger.info(f"Received data structure: {type(data)}")
-
-            # Handle different possible data structures
-            vantage_score = None
-
-            # If data is a list of records
-            if isinstance(data, list):
-                logger.info(f"Processing {len(data)} records from Excel API")
-
-                for record in data:
-                    if isinstance(record, dict):
-                        # Look for ZIP code match - the field is called 'zip'
-                        if 'zip' in record and record['zip'] is not None:
-                            # Handle both string and numeric ZIP codes
-                            if isinstance(record['zip'], (int, float)):
-                                record_zip = str(int(record['zip'])).zfill(5)  # Convert to 5-digit string
-                            else:
-                                record_zip = str(record['zip']).strip()
-
-                            if record_zip == zip_code:
-                                # Found matching ZIP, now get Vantage Score
-                                # Based on the API response, the field is "Average Vantage"
-                                if 'Average Vantage' in record and record['Average Vantage'] is not None:
-                                    vantage_score = record['Average Vantage']
-                                    logger.info(f"Vantage Score found for ZIP {zip_code}: {vantage_score}")
-                                    return {
-                                        'zip_code': zip_code,
-                                        'vantage_score': float(vantage_score),
-                                        'source': 'Excel API',
-                                        'endpoint_used': endpoint,
-                                        'city': record.get('city', 'Unknown')
-                                    }
-
-            # If data is a dict with ZIP codes as keys
-            elif isinstance(data, dict):
-                if zip_code in data:
-                    vantage_score = data[zip_code]
-                    if isinstance(vantage_score, dict):
-                        # Extract score from nested object
-                        score_fields = [
-                            'vantage_score', 'vantageScore', 'score', 'average_score',
-                            'avg_vantage_score', 'avgVantageScore', 'credit_score',
-                            'vantage', 'Vantage_Score', 'VANTAGE_SCORE'
-                        ]
-                        for field in score_fields:
-                            if field in vantage_score:
-                                vantage_score = vantage_score[field]
-                                break
-
-                    if vantage_score is not None:
-                        logger.info(f"Vantage Score found for ZIP {zip_code}: {vantage_score}")
-                        return {
-                            'zip_code': zip_code,
-                            'vantage_score': float(vantage_score),
-                            'source': 'Excel API',
-                            'endpoint_used': endpoint
-                        }
-
-        logger.warning(f"No Vantage Score found for ZIP {zip_code} in API response")
-        return None
+        # Look up ZIP code in local data
+        if zip_code in vantage_data:
+            record = vantage_data[zip_code]
+            logger.info(f"Vantage Score found for ZIP {zip_code}: {record['vantage_score']}")
+            return {
+                'zip_code': zip_code,
+                'vantage_score': record['vantage_score'],
+                'source': 'Local Excel File',
+                'city': record.get('city', 'Unknown'),
+                'state': record.get('state', 'Unknown')
+            }
+        else:
+            logger.warning(f"No Vantage Score found for ZIP {zip_code} in local data")
+            return None
 
     except Exception as e:
-        logger.error(f"Vantage Score API error: {e}")
+        logger.error(f"Vantage Score local lookup error: {e}")
         return None
 
 def calculate_solar_qualification_with_gemini(zip_code: str, monthly_bill: float, credit_band: str, roof_size: float):
@@ -969,8 +983,8 @@ def vantage_score():
         if vantage_data:
             # Log the successful request
             extra_data = {
-                'vantage_api_used': True,
-                'endpoint_used': vantage_data.get('endpoint_used'),
+                'local_excel_used': True,
+                'data_source': vantage_data.get('source', 'Local Excel File'),
                 'request_ip': request.remote_addr,
                 'user_agent': request.headers.get('User-Agent', 'Unknown')
             }

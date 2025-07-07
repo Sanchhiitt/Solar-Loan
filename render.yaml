@@ -25,8 +25,7 @@ services:
         value: 49430368095bb59d02bf3c8e1aa41dbf49591f38
       - key: CENSUS_API_URL
         value: https://api.census.gov/data/2021/acs/acs5
-      - key: VANTAGE_API_URL
-        value: https://excel-api-rq2e.onrender.com
+      # Note: Vantage Score now uses local Excel file instead of API
 
   # Frontend Service
   - type: web
