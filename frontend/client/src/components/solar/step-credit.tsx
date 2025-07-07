@@ -103,11 +103,12 @@ export function StepCredit({ onNext, onBack, zipCode }: StepCreditProps) {
         )}
       </div>
       
-      <div className="space-y-4">
+      {/* Credit Score Options - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {creditRanges.map((credit, index) => (
           <motion.button
             key={credit.value}
-            className={`w-full p-4 border rounded-lg text-left transition-all duration-300 ${
+            className={`p-4 border rounded-lg text-left transition-all duration-300 ${
               selectedScore === credit.value
                 ? "bg-[#F59E0B]/20 border-[#F59E0B] shadow-lg"
                 : "bg-white/5 border-white/20 hover:bg-white/10"
@@ -119,16 +120,16 @@ export function StepCredit({ onNext, onBack, zipCode }: StepCreditProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex justify-between items-center">
-              <div>
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
                 <div className="text-lg font-semibold text-white">{credit.label}</div>
-                <div className={`text-sm ${credit.color}`}>{credit.range}</div>
+                <div className={`w-4 h-4 border-2 rounded-full ${
+                  selectedScore === credit.value
+                    ? "border-[#F59E0B] bg-[#F59E0B]"
+                    : "border-gray-400"
+                }`} />
               </div>
-              <div className={`w-4 h-4 border-2 rounded-full ${
-                selectedScore === credit.value 
-                  ? "border-[#F59E0B] bg-[#F59E0B]" 
-                  : "border-gray-400"
-              }`} />
+              <div className={`text-sm ${credit.color} font-medium`}>{credit.range}</div>
             </div>
           </motion.button>
         ))}

@@ -202,7 +202,7 @@ export function ResultsDisplay({ data, onRestart, onGetQuote }: ResultsDisplayPr
 
       {/* Results Grid - Show for approved and borderline */}
       {(result.status === 'approved' || result.status === 'borderline') && (
-        <div className="space-y-4 overflow-visible">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-visible">
           {resultCards.map((card, index) => (
             <motion.div
               key={card.title}
@@ -210,19 +210,19 @@ export function ResultsDisplay({ data, onRestart, onGetQuote }: ResultsDisplayPr
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 + index * 0.1 }}
             >
-              <GlassCard className="p-4 overflow-visible">
-                <div className="flex items-center justify-between overflow-visible">
-                  <div className="flex items-center space-x-4">
-                    <card.icon className={`w-8 h-8 ${card.color}`} />
-                    <div className="flex flex-col">
-                      <div className="text-lg font-semibold text-white">{card.title}</div>
+              <GlassCard className="p-4 h-full overflow-visible">
+                <div className="flex flex-col space-y-3 h-full">
+                  <div className="flex items-center space-x-3">
+                    <card.icon className={`w-6 h-6 ${card.color} flex-shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">{card.title}</div>
                       <div className="text-xs text-gray-400">{card.description}</div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl font-bold text-white">{card.value}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xl font-bold text-white">{card.value}</div>
                     <div className="relative group">
-                      <Info className="w-5 h-5 text-gray-400 hover:text-white cursor-help transition-colors" />
+                      <Info className="w-4 h-4 text-gray-400 hover:text-[#F59E0B] cursor-help transition-colors flex-shrink-0" />
                       <div className="absolute right-0 bottom-8 w-80 p-3 bg-gray-900 border border-gray-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[9999]">
                         <div className="text-sm text-gray-300 leading-relaxed">
                           {card.calculation}
@@ -238,54 +238,55 @@ export function ResultsDisplay({ data, onRestart, onGetQuote }: ResultsDisplayPr
         </div>
       )}
 
-      {/* Explanation Card */}
-      {result.explanation && (
+      {/* Summary and Details Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Summary Card */}
         <GlassCard>
-          <h3 className="text-xl font-semibold text-white mb-4">Details</h3>
-          <p className="text-gray-300 leading-relaxed">{result.explanation}</p>
-        </GlassCard>
-      )}
-
-      {/* Summary Card */}
-      <GlassCard>
-        <h3 className="text-xl font-semibold text-white mb-4">Your Solar Summary</h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-300">Location:</span>
-            <span className="text-white">
-              {result.location ? `${result.location.city}, ${result.location.state}` : data.zipCode}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Monthly Bill Range:</span>
-            <span className="text-white">${data.billRange}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Credit Score:</span>
-            <span className="text-white capitalize">{data.creditScore}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Roof Size:</span>
-            <span className="text-white">
-              {isNaN(Number(data.roofSize))
-                ? `${parseRoofSizeToNumber(data.roofSize)} sq ft`
-                : `${data.roofSize} sq ft`
-              }
-            </span>
-          </div>
-        </div>
-
-
-
-        {(result.status === 'approved' || result.status === 'borderline') && result.lifetime_savings && (
-          <div className="border-t border-white/10 mt-4 pt-4">
-            <div className="flex justify-between items-center text-lg font-semibold">
-              <span className="text-gray-300">25-Year Savings:</span>
-              <span className="text-green-400">${result.lifetime_savings.toLocaleString()}</span>
+          <h3 className="text-xl font-semibold text-white mb-4">Your Solar Summary</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-300">Location:</span>
+              <span className="text-white">
+                {result.location ? `${result.location.city}, ${result.location.state}` : data.zipCode}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Monthly Bill Range:</span>
+              <span className="text-white">${data.billRange}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Credit Score:</span>
+              <span className="text-white capitalize">{data.creditScore}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Roof Size:</span>
+              <span className="text-white">
+                {isNaN(Number(data.roofSize))
+                  ? `${parseRoofSizeToNumber(data.roofSize)} sq ft`
+                  : `${data.roofSize} sq ft`
+                }
+              </span>
             </div>
           </div>
+
+          {(result.status === 'approved' || result.status === 'borderline') && result.lifetime_savings && (
+            <div className="border-t border-white/10 mt-4 pt-4">
+              <div className="flex justify-between items-center text-lg font-semibold">
+                <span className="text-gray-300">25-Year Savings:</span>
+                <span className="text-green-400">${result.lifetime_savings.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+        </GlassCard>
+
+        {/* Explanation Card */}
+        {result.explanation && (
+          <GlassCard>
+            <h3 className="text-xl font-semibold text-white mb-4">Details</h3>
+            <p className="text-gray-300 leading-relaxed">{result.explanation}</p>
+          </GlassCard>
         )}
-      </GlassCard>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex gap-4">

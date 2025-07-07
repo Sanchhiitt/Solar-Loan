@@ -42,14 +42,14 @@ export function StepRoof({ onNext, onBack }: StepRoofProps) {
       </div>
 
       <div className="space-y-6">
-        {/* Roof Size Options */}
+        {/* Roof Size Options - Responsive Grid */}
         <div>
           <h3 className="text-lg font-semibold text-white mb-4">Select your roof size</h3>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {roofSizeRanges.map((size, index) => (
               <motion.button
                 key={size.value}
-                className={`w-full p-4 border rounded-lg text-left transition-all duration-300 ${
+                className={`p-4 border rounded-lg text-left transition-all duration-300 ${
                   roofSize === size.value && !useCustom
                     ? "bg-[#F59E0B]/20 border-[#F59E0B] shadow-lg"
                     : "bg-white/5 border-white/20 hover:bg-white/10"
@@ -65,16 +65,16 @@ export function StepRoof({ onNext, onBack }: StepRoofProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="flex justify-between items-center">
-                  <div>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex justify-between items-center">
                     <div className="text-lg font-semibold text-white">{size.label}</div>
-                    <div className="text-sm text-gray-400">{size.description}</div>
+                    <div className={`w-4 h-4 border-2 rounded-full ${
+                      roofSize === size.value && !useCustom
+                        ? "border-[#F59E0B] bg-[#F59E0B]"
+                        : "border-gray-400"
+                    }`} />
                   </div>
-                  <div className={`w-4 h-4 border-2 rounded-full ${
-                    roofSize === size.value && !useCustom
-                      ? "border-[#F59E0B] bg-[#F59E0B]"
-                      : "border-gray-400"
-                  }`} />
+                  <div className="text-sm text-gray-400">{size.description}</div>
                 </div>
               </motion.button>
             ))}

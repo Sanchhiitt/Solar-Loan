@@ -216,7 +216,7 @@ export default function SolarChecker() {
         
         {/* Main Form Container */}
         <div className="flex-1 flex items-center justify-center px-4 pb-8">
-          <div className="w-full max-w-lg">
+          <div className={`w-full ${showResults ? 'max-w-7xl' : 'max-w-2xl'} transition-all duration-500`}>
             <GlassCard>
               <AnimatePresence mode="wait">
                 {renderCurrentStep()}
